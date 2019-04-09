@@ -5,7 +5,6 @@ const chai = require('chai'),
   Support = require('../../support'),
   Sequelize = Support.Sequelize,
   Op = Sequelize.Op,
-  Promise = Sequelize.Promise,
   dialect = Support.getTestDialect(),
   DataTypes = require('../../../../lib/data-types'),
   sequelize = require('../../../../lib/sequelize');
@@ -62,20 +61,18 @@ if (dialect.match(/^postgres/)) {
         friends: [{
           name: 'John Smith'
         }]
-      }).then(userInstance => {
+      }).then(async userInstance => {
         expect(userInstance.friends).to.have.length(1);
         expect(userInstance.friends[0].name).to.equal('John Smith');
 
-        return userInstance.update({
+        const { friends } = await userInstance.update({
           friends: [{
             name: 'John Smythe'
           }]
         });
-      }).get('friends')
-        .tap(friends => {
-          expect(friends).to.have.length(1);
-          expect(friends[0].name).to.equal('John Smythe');
-        });
+        expect(friends).to.have.length(1);
+        expect(friends[0].name).to.equal('John Smythe');
+      });
     });
 
     it('should be able to find a record while searching in an array', function() {
@@ -93,7 +90,7 @@ if (dialect.match(/^postgres/)) {
 
     describe('json', () => {
       it('should be able to retrieve a row with ->> operator', function() {
-        return Sequelize.Promise.all([
+        return Promise.all([
           this.User.create({ username: 'swen', emergency_contact: { name: 'kate' } }),
           this.User.create({ username: 'anna', emergency_contact: { name: 'joe' } })])
           .then(() => {
@@ -105,7 +102,7 @@ if (dialect.match(/^postgres/)) {
       });
 
       it('should be able to query using the nested query language', function() {
-        return Sequelize.Promise.all([
+        return Promise.all([
           this.User.create({ username: 'swen', emergency_contact: { name: 'kate' } }),
           this.User.create({ username: 'anna', emergency_contact: { name: 'joe' } })])
           .then(() => {
@@ -119,7 +116,7 @@ if (dialect.match(/^postgres/)) {
       });
 
       it('should be able to query using dot syntax', function() {
-        return Sequelize.Promise.all([
+        return Promise.all([
           this.User.create({ username: 'swen', emergency_contact: { name: 'kate' } }),
           this.User.create({ username: 'anna', emergency_contact: { name: 'joe' } })])
           .then(() => {
@@ -131,7 +128,7 @@ if (dialect.match(/^postgres/)) {
       });
 
       it('should be able to query using dot syntax with uppercase name', function() {
-        return Sequelize.Promise.all([
+        return Promise.all([
           this.User.create({ username: 'swen', emergencyContact: { name: 'kate' } }),
           this.User.create({ username: 'anna', emergencyContact: { name: 'joe' } })])
           .then(() => {
@@ -1064,7 +1061,7 @@ if (dialect.match(/^postgres/)) {
         });
       });
 
-      it('can select nested include', function() {
+      it('can select nested include', async function() {
         this.sequelize.options.quoteIdentifiers = false;
         this.sequelize.getQueryInterface().QueryGenerator.options.quoteIdentifiers = false;
         this.Professor = this.sequelize.define('Professor', {
@@ -1091,115 +1088,90 @@ if (dialect.match(/^postgres/)) {
         this.Class.belongsTo(this.Professor);
         this.Class.belongsToMany(this.Student, { through: this.ClassStudent });
         this.Student.belongsToMany(this.Class, { through: this.ClassStudent });
-        return this.Professor.sync({ force: true })
-          .then(() => {
-            return this.Student.sync({ force: true });
-          })
-          .then(() => {
-            return this.Class.sync({ force: true });
-          })
-          .then(() => {
-            return this.ClassStudent.sync({ force: true });
-          })
-          .then(() => {
-            return this.Professor.bulkCreate([
+        try {
+          await this.Professor.sync({ force: true });
+          await this.Student.sync({ force: true });
+          await this.Class.sync({ force: true });
+          await this.ClassStudent.sync({ force: true });
+          await this.Professor.bulkCreate([
+            {
+              id: 1,
+              fullName: 'Albus Dumbledore'
+            },
+            {
+              id: 2,
+              fullName: 'Severus Snape'
+            }
+          ]);
+          await this.Class.bulkCreate([
+            {
+              id: 1,
+              name: 'Transfiguration',
+              ProfessorId: 1
+            },
+            {
+              id: 2,
+              name: 'Potions',
+              ProfessorId: 2
+            },
+            {
+              id: 3,
+              name: 'Defence Against the Dark Arts',
+              ProfessorId: 2
+            }
+          ]);
+          await this.Student.bulkCreate([
+            {
+              id: 1,
+              fullName: 'Harry Potter'
+            },
+            {
+              id: 2,
+              fullName: 'Ron Weasley'
+            },
+            {
+              id: 3,
+              fullName: 'Ginny Weasley'
+            },
+            {
+              id: 4,
+              fullName: 'Hermione Granger'
+            }
+          ]);
+          await Promise.all([
+            this.Student.findByPk(1)
+              .then(Harry => Harry.setClasses([1, 2, 3])),
+            this.Student.findByPk(2)
+              .then(Ron => Ron.setClasses([1, 2])),
+            this.Student.findByPk(3)
+              .then(Ginny => Ginny.setClasses([2, 3])),
+            this.Student.findByPk(4)
+              .then(Hermione => Hermione.setClasses([1, 2, 3]))
+          ]);
+          const professors = await this.Professor.findAll({
+            include: [
               {
-                id: 1,
-                fullName: 'Albus Dumbledore'
-              },
-              {
-                id: 2,
-                fullName: 'Severus Snape'
+                model: this.Class,
+                include: [
+                  {
+                    model: this.Student
+                  }
+                ]
               }
-            ]);
-          })
-          .then(() => {
-            return this.Class.bulkCreate([
-              {
-                id: 1,
-                name: 'Transfiguration',
-                ProfessorId: 1
-              },
-              {
-                id: 2,
-                name: 'Potions',
-                ProfessorId: 2
-              },
-              {
-                id: 3,
-                name: 'Defence Against the Dark Arts',
-                ProfessorId: 2
-              }
-            ]);
-          })
-          .then(() => {
-            return this.Student.bulkCreate([
-              {
-                id: 1,
-                fullName: 'Harry Potter'
-              },
-              {
-                id: 2,
-                fullName: 'Ron Weasley'
-              },
-              {
-                id: 3,
-                fullName: 'Ginny Weasley'
-              },
-              {
-                id: 4,
-                fullName: 'Hermione Granger'
-              }
-            ]);
-          })
-          .then(() => {
-            return Promise.all([
-              this.Student.findByPk(1)
-                .then(Harry => {
-                  return Harry.setClasses([1, 2, 3]);
-                }),
-              this.Student.findByPk(2)
-                .then(Ron => {
-                  return Ron.setClasses([1, 2]);
-                }),
-              this.Student.findByPk(3)
-                .then(Ginny => {
-                  return Ginny.setClasses([2, 3]);
-                }),
-              this.Student.findByPk(4)
-                .then(Hermione => {
-                  return Hermione.setClasses([1, 2, 3]);
-                })
-            ]);
-          })
-          .then(() => {
-            return this.Professor.findAll({
-              include: [
-                {
-                  model: this.Class,
-                  include: [
-                    {
-                      model: this.Student
-                    }
-                  ]
-                }
-              ],
-              order: [
-                ['id'],
-                [this.Class, 'id'],
-                [this.Class, this.Student, 'id']
-              ]
-            });
-          })
-          .then(professors => {
-            expect(professors.length).to.eql(2);
-            expect(professors[0].fullName).to.eql('Albus Dumbledore');
-            expect(professors[0].Classes.length).to.eql(1);
-            expect(professors[0].Classes[0].Students.length).to.eql(3);
-          })
-          .finally(() => {
-            this.sequelize.getQueryInterface().QueryGenerator.options.quoteIdentifiers = true;
+            ],
+            order: [
+              ['id'],
+              [this.Class, 'id'],
+              [this.Class, this.Student, 'id']
+            ]
           });
+          expect(professors.length).to.eql(2);
+          expect(professors[0].fullName).to.eql('Albus Dumbledore');
+          expect(professors[0].Classes.length).to.eql(1);
+          expect(professors[0].Classes[0].Students.length).to.eql(3);
+        } finally {
+          this.sequelize.getQueryInterface().QueryGenerator.options.quoteIdentifiers = true;
+        }
       });
     });
   });

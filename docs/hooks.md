@@ -74,7 +74,7 @@ User.hooks.add('beforeValidate', (user, options) => {
 });
 
 User.hooks.add('afterValidate', (user, options) => {
-  return Promise.reject(new Error("I'm afraid I can't let you do that!"));
+  throw new Error("I'm afraid I can't let you do that!");
 });
 ```
 

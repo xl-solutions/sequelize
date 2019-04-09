@@ -10,7 +10,6 @@ import {
   Transactionable,
   WhereOptions,
 } from '../model';
-import { Promise } from '../promise';
 import { Transaction } from '../transaction';
 import { Association, AssociationScope, ForeignKeyOptions, ManyToManyOptions, MultiAssociationAccessors } from './base';
 

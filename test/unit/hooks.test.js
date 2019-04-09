@@ -3,8 +3,6 @@
 const chai = require('chai'),
   sinon = require('sinon'),
   expect = chai.expect,
-  Sequelize = require('../../index'),
-  Promise = Sequelize.Promise,
   Support = require('./support'),
   _ = require('lodash'),
   current = Support.sequelize;
@@ -340,8 +338,8 @@ describe(Support.getTestDialectTeaser('Hooks'), () => {
 
   describe('promises', () => {
     it('can return a promise', function() {
-      this.Model.hooks.add('beforeBulkCreate', () => {
-        return Sequelize.Promise.resolve();
+      this.Model.hooks.add('beforeBulkCreate', async() => {
+        // noop
       });
 
       return expect(this.Model.hooks.run('beforeBulkCreate')).to.be.fulfilled;

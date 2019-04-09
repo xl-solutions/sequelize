@@ -6,7 +6,7 @@ const Support = require('../../support');
 const dialect = Support.getTestDialect();
 const DataTypes = require('../../../../lib/data-types');
 const _ = require('lodash');
-
+const Utils = require('../../../../lib/utils');
 
 if (dialect.match(/^postgres/)) {
   describe('[POSTGRES Specific] QueryInterface', () => {
@@ -16,9 +16,9 @@ if (dialect.match(/^postgres/)) {
     });
 
     describe('createSchema', () => {
-      beforeEach(function() {
+      beforeEach(async function() {
         // make sure we don't have a pre-existing schema called testSchema.
-        return this.queryInterface.dropSchema('testschema').reflect();
+        return Utils.reflectPromise(this.queryInterface.dropSchema('testschema'));
       });
 
       it('creates a schema', function() {
@@ -60,14 +60,12 @@ if (dialect.match(/^postgres/)) {
     });
 
     describe('renameFunction', () => {
-      beforeEach(function() {
+      beforeEach(async function() {
         // ensure the function names we'll use don't exist before we start.
         // then setup our function to rename
-        return this.queryInterface.dropFunction('rftest1', [])
-          .reflect()
-          .then(() => this.queryInterface.dropFunction('rftest2', []))
-          .reflect()
-          .then(() => this.queryInterface.createFunction('rftest1', [], 'varchar', 'plpgsql', 'return \'testreturn\';', {}));
+        await Utils.reflectPromise(this.queryInterface.dropFunction('rftest1', []));
+        await Utils.reflectPromise(this.queryInterface.dropFunction('rftest2', []));
+        await this.queryInterface.createFunction('rftest1', [], 'varchar', 'plpgsql', 'return \'testreturn\';', {});
       });
 
       it('renames a function', function() {
@@ -81,20 +79,18 @@ if (dialect.match(/^postgres/)) {
 
     describe('createFunction', () => {
 
-      beforeEach(function() {
+      beforeEach(async function() {
         // make sure we don't have a pre-existing function called create_job
         // this is needed to cover the edge case of afterEach not getting called because of an unexpected issue or stopage with the
         // test suite causing a failure of afterEach's cleanup to be called.
-        return this.queryInterface.dropFunction('create_job', [{ type: 'varchar', name: 'test' }])
-          // suppress errors here. if create_job doesn't exist thats ok.
-          .reflect();
+        // suppress errors here. if create_job doesn't exist thats ok.
+        await Utils.reflectPromise(this.queryInterface.dropFunction('create_job', [{ type: 'varchar', name: 'test' }]));
       });
 
-      after(function() {
+      after(async function() {
         // cleanup
-        return this.queryInterface.dropFunction('create_job', [{ type: 'varchar', name: 'test' }])
-          // suppress errors here. if create_job doesn't exist thats ok.
-          .reflect();
+        // suppress errors here. if create_job doesn't exist thats ok.
+        await Utils.reflectPromise(this.queryInterface.dropFunction('create_job', [{ type: 'varchar', name: 'test' }]));
       });
 
       it('creates a stored procedure', function() {
@@ -176,14 +172,13 @@ if (dialect.match(/^postgres/)) {
     });
 
     describe('dropFunction', () => {
-      beforeEach(function() {
+      beforeEach(async function() {
         const body = 'return test;';
         const options = {};
 
         // make sure we have a droptest function in place.
-        return this.queryInterface.createFunction('droptest', [{ type: 'varchar', name: 'test' }], 'varchar', 'plpgsql', body, options)
-          // suppress errors.. this could fail if the function is already there.. thats ok.
-          .reflect();
+        // suppress errors.. this could fail if the function is already there.. thats ok.
+        await Utils.reflectPromise(this.queryInterface.createFunction('droptest', [{ type: 'varchar', name: 'test' }], 'varchar', 'plpgsql', body, options));
       });
 
       it('can drop a function', function() {

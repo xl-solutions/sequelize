@@ -22,7 +22,6 @@ import {
 } from './model';
 import { ModelManager } from './model-manager';
 import * as Op from './operators';
-import { Promise } from './promise';
 import { QueryInterface, QueryOptions, QueryOptionsWithModel, QueryOptionsWithType } from './query-interface';
 import QueryTypes = require('./query-types');
 import { Transaction, TransactionOptions } from './transaction';

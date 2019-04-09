@@ -698,7 +698,7 @@ describe(Support.getTestDialectTeaser('InstanceValidator'), () => {
       }
     });
 
-    return Sequelize.Promise.all([
+    return Promise.all([
       expect(new User({
         password: 'short',
         salt: '42'

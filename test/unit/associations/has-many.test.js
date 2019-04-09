@@ -6,7 +6,6 @@ const chai = require('chai'),
   stub = sinon.stub,
   _ = require('lodash'),
   Support = require('../support'),
-  Promise = Support.Sequelize.Promise,
   DataTypes = require('../../../lib/data-types'),
   HasMany = require('../../../lib/associations/has-many'),
   Op = require('../../../lib/operators'),
@@ -144,7 +143,7 @@ describe(Support.getTestDialectTeaser('hasMany'), () => {
       idC = Math.random().toString(),
       foreignKey = 'user_id';
 
-    it('should fetch associations for a single instance', () => {
+    it('should fetch associations for a single instance', async() => {
       const findAll = stub(Task, 'findAll').resolves([
         new Task({}),
         new Task({})
@@ -160,15 +159,16 @@ describe(Support.getTestDialectTeaser('hasMany'), () => {
       expect(findAll).to.have.been.calledOnce;
       expect(findAll.firstCall.args[0].where).to.deep.equal(where);
 
-      return actual.then(results => {
+      try {
+        const results = await actual;
         expect(results).to.be.an('array');
         expect(results.length).to.equal(2);
-      }).finally(() => {
+      } finally {
         findAll.restore();
-      });
+      }
     });
 
-    it('should fetch associations for multiple source instances', () => {
+    it('should fetch associations for multiple source instances', async() => {
       const findAll = stub(Task, 'findAll').returns(
         Promise.resolve([
           new Task({
@@ -197,16 +197,17 @@ describe(Support.getTestDialectTeaser('hasMany'), () => {
       expect(findAll.firstCall.args[0].where[foreignKey]).to.have.property(Op.in);
       expect(findAll.firstCall.args[0].where[foreignKey][Op.in]).to.deep.equal([idA, idB, idC]);
 
-      return actual.then(result => {
+      try {
+        const result = await actual;
         expect(result).to.be.an('object');
         expect(Object.keys(result)).to.deep.equal([idA, idB, idC]);
 
         expect(result[idA].length).to.equal(3);
         expect(result[idB].length).to.equal(1);
         expect(result[idC].length).to.equal(0);
-      }).finally(() => {
+      } finally {
         findAll.restore();
-      });
+      }
     });
   });
   describe('association hooks', () => {

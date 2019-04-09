@@ -7,9 +7,6 @@ const Config = require('./config/config');
 const chai = require('chai');
 const expect = chai.expect;
 const AbstractQueryGenerator = require('../lib/dialects/abstract/query-generator');
-const sinon = require('sinon');
-
-sinon.usingPromise(require('bluebird'));
 
 chai.use(require('chai-spies'));
 chai.use(require('chai-datetime'));
@@ -23,16 +20,11 @@ process.on('uncaughtException', e => {
   console.error('An unhandled exception occurred:');
   throw e;
 });
-Sequelize.Promise.onPossiblyUnhandledRejection(e => {
-  console.error('An unhandled rejection occurred:');
-  throw e;
-});
-Sequelize.Promise.longStackTraces();
 
 const Support = {
   Sequelize,
 
-  prepareTransactionTest(sequelize) {
+  async prepareTransactionTest(sequelize) {
     const dialect = Support.getTestDialect();
 
     if (dialect === 'sqlite') {
@@ -43,9 +35,10 @@ const Support = {
       const options = Object.assign({}, sequelize.options, { storage: p }),
         _sequelize = new Sequelize(sequelize.config.database, null, null, options);
 
-      return _sequelize.sync({ force: true }).return(_sequelize);
+      await _sequelize.sync({ force: true });
+      return _sequelize;
     }
-    return Sequelize.Promise.resolve(sequelize);
+    return sequelize;
   },
 
   createSequelizeInstance(options = {}) {
@@ -195,6 +188,10 @@ const Support = {
       const bind = assertions.bind[Support.sequelize.dialect.name] || assertions.bind['default'] || assertions.bind;
       expect(query.bind).to.deep.equal(bind);
     }
+  },
+
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 };
 

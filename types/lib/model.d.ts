@@ -15,7 +15,6 @@ import { HookReturn, SequelizeHooks, ModelHooks, Hooks } from './hooks';
 import { ValidationOptions } from './instance-validator';
 import { ModelManager } from './model-manager';
 import Op = require('./operators');
-import { Promise } from './promise';
 import { QueryOptions, IndexesOptions } from './query-interface';
 import { Config, Options, Sequelize, SyncOptions } from './sequelize';
 import { Transaction } from './transaction';

@@ -110,7 +110,10 @@
     "no-unused-expressions": "error",
     "no-sequences": "error",
     "no-self-compare": "error",
-    "no-case-declarations": "off"
+    "no-case-declarations": "off",
+
+    // TODO: Breaking, should be enabled in future
+    "require-atomic-updates": "off"
   },
   "parserOptions": {
     "ecmaVersion": 9,
